@@ -6,6 +6,7 @@ already been submitted, filtered either by running state or input
 arguments.
 
 """
+import math
 import datetime
 import hashlib
 import logging
@@ -14,7 +15,9 @@ from collections import Counter
 import pytz
 from celery.states import READY_STATES
 
+from django.conf import settings
 from common.djangoapps.util import milestones_helpers
+from common.djangoapps.student.models import CourseEnrollment
 from lms.djangoapps.bulk_email.api import get_course_email
 from lms.djangoapps.certificates.models import CertificateGenerationHistory
 from lms.djangoapps.instructor_task.api_helper import (
@@ -377,7 +380,24 @@ def submit_problem_grade_report(request, course_key, **task_kwargs):
     task_class = calculate_problem_grade_report
     task_input = task_kwargs
     task_key = ""
-    return submit_task(request, task_type, task_class, course_key, task_input, task_key)
+
+    page_size = settings.FEATURES.get('MAX_USER_COUNT_PER_PROBLEM_RESPONSE') if settings.FEATURES.get('MAX_USER_COUNT_PER_PROBLEM_RESPONSE') is not None else 5000
+    users_total = CourseEnrollment.objects.users_enrolled_in(
+        course_id=course_key,
+        include_inactive=True,
+        verified_only=False,
+    ).count()
+
+    if users_total < page_size:
+        return submit_task(request, task_type, task_class, course_key, task_input, task_key)
+
+    total_pages = math.ceil(users_total / page_size)
+    for x in range(total_pages):
+        task_key = x
+
+        if x == total_pages - 1:
+            return submit_task(request, task_type, task_class, course_key, { "page": x + 1, "page_size": page_size, "total_pages": total_pages }, task_key)
+        submit_task(request, task_type, task_class, course_key, { "page": x + 1, "page_size": page_size, "total_pages": total_pages }, task_key)
 
 
 def submit_calculate_students_features_csv(request, course_key, features, **task_kwargs):
