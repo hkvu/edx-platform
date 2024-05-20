@@ -199,6 +199,187 @@ div.problem {
 
 }
 
+// +Problem - Theme #1
+// ====================
+@keyframes status-animation {
+  from {
+    transform: rotate(10deg);
+    transform-origin: center center;
+  }
+  to {
+    transform: rotate(-10deg);
+    transform-origin: center center;
+  }
+}
+
+@keyframes clippath {
+  0%,
+  100% {
+    clip-path: inset(0 0 95% 0);
+  }
+
+  25% {
+    clip-path: inset(0 95% 0 0);
+  }
+  50% {
+    clip-path: inset(95% 0 0 0);
+  }
+  75% {
+    clip-path: inset(0 0 0 95%);
+  }
+}
+
+div.vibrant {
+  border-radius: 4px;
+  box-shadow: 0 0 8px 0 rgba(0,0,0,0.4);
+  transition: 0.3s;
+  margin-top: 10px;
+  padding: 20px;
+
+  .status-icon:after {
+    font-size: 2em !important;
+    animation-name: status-animation;
+    animation-duration: 2s;
+    animation-delay: -2s;
+    animation-direction: alternate-reverse;
+    animation-iteration-count: infinite;
+  }
+
+  .submit-attempt-container {
+    & button {
+      position: relative;
+
+      &:before {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        border: 2px solid #0075b4;
+        transition: all .5s;
+        animation: clippath 3s infinite linear;
+      }
+
+      &:after {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        border: 2px solid #0075b4;
+        transition: all .5s;
+        animation: clippath 3s infinite -1.5s linear;
+      }
+    }
+
+    :disabled {
+      &:before {
+        border: 0;
+      }
+      &:after {
+        border: 0;
+      }
+    }
+  }
+
+  & fieldset {
+    .choicegroup_incorrect {
+      outline: 3px dashed #b20610;
+      outline-offset: 3px;
+      border-radius: 0px !important;
+      border: 0 !important;
+    }
+
+    .choicegroup_correct {
+      outline: 3px dashed #008100;
+      outline-offset: 3px;
+      border-radius: 0px !important;
+      border: 0 !important;
+    }
+
+    & .field label {
+      border-radius: 8px !important;
+
+      &:before {
+        position: absolute;
+        content: "";
+        transition: all .25s;
+        border-bottom: 1px solid rgba(255,255,255,.5);
+        border-left: 1px solid rgba(255,255,255,.5);
+        width: 10px;
+        height: 10px;
+        left: 4px;
+        bottom: 4px;
+      }
+
+      &:after {
+        position: absolute;
+        content: "";
+        transition: all .25s;
+        border-top: 1px solid rgba(255,255,255,.5);
+        border-right: 1px solid rgba(255,255,255,.5);
+        width: 10px;
+        height: 10px;
+        top: 4px;
+        right: 4px;
+      }
+
+      &:hover:before{
+        width: 100%;
+        height: 100%;
+      }
+
+      &:hover:after{
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    & .field:nth-of-type(1) {
+      & label {
+        background-color: rgba(213,62,51,0.5);
+      }
+    }
+    & .field:nth-of-type(2) {
+      & label {
+        background-color: rgba(57,153,83,0.5);
+      }
+    }
+    & .field:nth-of-type(3) {
+      & label {
+        background-color: rgba(55,122,245,0.5);
+      }
+    }
+    & .field:nth-of-type(4) {
+      & label {
+        background-color: rgba(251,179,0,0.5);
+      }
+    }
+    & .field:nth-of-type(5) {
+      & label {
+        background-color: rgba(213,62,51,0.2);
+      }
+    }
+    & .field:nth-of-type(6) {
+      & label {
+        background-color: rgba(57,153,83,0.2);
+      }
+    }
+    & .field:nth-of-type(7) {
+      & label {
+        background-color: rgba(55,122,245,0.2);
+      }
+    }
+    & .field:nth-of-type(8) {
+      & label {
+        background-color: rgba(251,179,0,0.2);
+      }
+    }
+  }
+}
+
 // CAPA gap spacing between problem parts
 // can not use the & + & since .problem is nested deeply in .xmodule_display.xmodule_CapaModule
 .wrapper-problem-response + .wrapper-problem-response,
@@ -1123,7 +1304,7 @@ div.problem {
   }
 
   .notification {
-    @include float(left);
+    //@include float(left);
 
     margin-top: $baseline / 2;
     padding: ($baseline / 2.5) ($baseline / 2) ($baseline / 5) ($baseline / 2);

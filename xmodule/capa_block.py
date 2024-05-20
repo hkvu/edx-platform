@@ -170,6 +170,17 @@ class ProblemBlock(
         # use display_name_with_default for those
         default=_("Blank Problem")
     )
+    skin = String(
+        display_name=_("Skin"),
+        help=_("The skin for this component."),
+        default=None,
+        scope=Scope.settings,
+        values=[  
+            {"display_name": _("Vibrant"), "value": "vibrant"},
+            {"display_name": _("Custom"), "value": "custom"},
+            {"display_name": _("None"), "value": None},
+        ]
+    )
     attempts = Integer(
         help=_("Number of attempts taken by the student on this problem"),
         default=0,
@@ -1254,6 +1265,8 @@ class ProblemBlock(
 
         html = self.runtime.service(self, 'mako').render_lms_template('problem.html', context)
 
+        html = self.apply_skin(html)
+
         if encapsulate:
             html = HTML('<div id="problem_{id}" class="problem" data-url="{ajax_url}">{html}</div>').format(
                 id=self.location.html_id(), ajax_url=self.ajax_url, html=HTML(html)
@@ -1330,6 +1343,12 @@ class ProblemBlock(
                 answer_notification_message = _("Answer submitted.")
 
         return answer_notification_type, answer_notification_message
+
+    def apply_skin(self, html):
+        if self.skin is not None:
+            html = re.sub(fr'<div class="problem">','<div class="problem '+self.skin+'">',html)
+
+        return html
 
     def remove_tags_from_html(self, html):
         """
