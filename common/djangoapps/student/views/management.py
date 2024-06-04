@@ -55,6 +55,8 @@ from openedx.core.djangoapps.theming import helpers as theming_helpers
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_authn.tasks import send_activation_email
 from openedx.core.djangoapps.user_authn.toggles import should_redirect_to_authn_microfrontend
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from openedx.core.djangoapps.enrollments.utils import is_enrollment_allowed
 from openedx.core.djangolib.markup import HTML, Text
 from openedx.core.lib.api.authentication import BearerAuthenticationAllowInactiveUser
 from openedx.features.enterprise_support.utils import is_enterprise_learner
@@ -374,6 +376,13 @@ def change_enrollment(request, check_access=True):
 
         if CourseEntitlement.check_for_existing_entitlement_and_enroll(user=user, course_run_key=course_id):
             return HttpResponse(reverse('courseware', args=[str(course_id)]))
+
+        course_overview = CourseOverview.objects.get(id=str(course_id))
+
+        is_allowed = is_enrollment_allowed(user, course_id, course_overview)
+        if not is_allowed:
+            log.info('User %s is not allowed to enroll in course %s.', user.username, course_id)
+            return HttpResponseBadRequest(_("Enrollment is blocked"))
 
         # Check that auto enrollment is allowed for this course
         # (= the course is NOT behind a paywall)

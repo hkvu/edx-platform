@@ -128,6 +128,8 @@ class CourseOverviewTestCase(CatalogIntegrationMixin, ModuleStoreTestCase, Cache
             'enrollment_domain',
             'invitation_only',
             'max_student_enrollments_allowed',
+            'enrollment_allowlist',
+            'enrollment_blocklist',
             'catalog_visibility',
         ]
         for attribute_name in fields_to_test:

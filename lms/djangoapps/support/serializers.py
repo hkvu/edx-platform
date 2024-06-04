@@ -79,6 +79,7 @@ def serialize_user_info(user, user_social_auths=None):
     if user_social_auths:
         for user_social_auth in user_social_auths:
             user_info.setdefault('sso_list', []).append({
+                "provider": user_social_auth.provider,
                 'uid': user_social_auth.uid,
             })
     return user_info

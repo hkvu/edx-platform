@@ -40,6 +40,8 @@ from openedx.core.djangoapps.enrollments.errors import (
     CourseEnrollmentExistsError,
     CourseModeNotFoundError
 )
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from openedx.core.djangoapps.enrollments.utils import is_enrollment_allowed
 from openedx.core.djangoapps.enrollments.forms import CourseEnrollmentsApiListForm
 from openedx.core.djangoapps.enrollments.paginators import CourseEnrollmentsApiListPagination
 from openedx.core.djangoapps.enrollments.serializers import (
@@ -740,6 +742,22 @@ class EnrollmentListView(APIView, ApiKeyPermissionMixIn):
                     )
                 }
             )
+
+        if username == request.user.username and not has_api_key_permissions \
+                and not GlobalStaff().has_user(request.user):
+            user = request.user
+            course_overview = CourseOverview.objects.get(id=str(course_id))
+
+            is_allowed = is_enrollment_allowed(user, course_id, course_overview)
+            if not is_allowed:
+                return Response(
+                    status=status.HTTP_403_FORBIDDEN,
+                    data={
+                        "message": "User {} is not allowed to enroll in course {}.".format(
+                            user.username, str(course_id)
+                            )
+                    }
+                )
 
         try:
             # Lookup the user, instead of using request.user, since request.user may not match the username POSTed.

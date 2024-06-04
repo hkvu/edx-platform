@@ -20,3 +20,4 @@ class Messages:
     NO_DEFAULT_ENROLLMENT_MODE = 'Course {course_id} does not have an honor or audit mode.'
     ENROLLMENT_EXISTS = 'User {username} is already enrolled in {course_id}.'
     ENROLLMENT_CLOSED = 'Enrollment is closed for {course_id}.'
+    ENROLLMENT_BLOCKED = 'User {username} is not allowed to enrollment in {course_id}.'
