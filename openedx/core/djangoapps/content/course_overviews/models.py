@@ -120,6 +120,8 @@ class CourseOverview(TimeStampedModel):
     enrollment_domain = models.TextField(null=True)
     invitation_only = models.BooleanField(default=False)
     max_student_enrollments_allowed = models.IntegerField(null=True)
+    enrollment_allowlist = models.TextField(null=True)
+    enrollment_blocklist = models.TextField(null=True)
 
     # Catalog information
     catalog_visibility = models.TextField(null=True)
@@ -181,6 +183,8 @@ class CourseOverview(TimeStampedModel):
         start = course.start
         end = course.end
         max_student_enrollments_allowed = course.max_student_enrollments_allowed
+        enrollment_allowlist = course.enrollment_allowlist
+        enrollment_blocklist = course.enrollment_blocklist
         if isinstance(course.id, CCXLocator):
             from lms.djangoapps.ccx.utils import get_ccx_from_ccx_locator
             ccx = get_ccx_from_ccx_locator(course.id)
@@ -244,6 +248,8 @@ class CourseOverview(TimeStampedModel):
         course_overview.enrollment_domain = course.enrollment_domain
         course_overview.invitation_only = course.invitation_only
         course_overview.max_student_enrollments_allowed = max_student_enrollments_allowed
+        course_overview.enrollment_allowlist = enrollment_allowlist
+        course_overview.enrollment_blocklist = enrollment_blocklist
 
         course_overview.catalog_visibility = course.catalog_visibility
         course_overview.short_description = CourseDetails.fetch_about_attribute(course.id, 'short_description')

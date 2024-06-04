@@ -565,6 +565,32 @@ class CourseFields:  # lint-amnesty, pylint: disable=missing-class-docstring
         help=_("Enter the external login method students can use for the course."),
         scope=Scope.settings
     )
+    enrollment_allowlist = Dict(
+        display_name=_("Enrollment allowlist"),
+        help=_(
+            "Enter a list in JSON format to restrict enrollments. "
+            "Regular expressions are accepted in both keys and values. "
+            "If the list is not empty, only enrollment with matched values will be allowed. "
+            "{"
+            "  \"google\": [ \"^(.*?)@gmail\\\\.com\" ],"
+            "  \"openedx\": [ \"^(.*?)@edu\\\\.(.*?)\\\\.com\" ],"
+            "  \".*\": [ \"^(.*?)@example\\\\.com\" ]"
+            "}"
+        ),
+        scope=Scope.settings, default=None
+    )
+    enrollment_blocklist = Dict(
+        display_name=_("Enrollment blocklist"),
+        help=_(
+            "Enter a list in JSON format to restrict enrollments. "
+            "Regular expressions are accepted in both keys and values. "
+            "If the list is not empty, enrollment with matched values will be blocked. "
+            "{"
+            "  \".*\": [ \"^user@edu\\\\.example\\\\.com\" ]"
+            "}"
+        ),
+        scope=Scope.settings, default=None
+    )
     certificates_show_before_end = Boolean(
         display_name=_("Certificates Downloadable Before End"),
         help=_(

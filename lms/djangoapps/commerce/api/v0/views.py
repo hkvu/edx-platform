@@ -24,6 +24,8 @@ from openedx.core.djangoapps.embargo import api as embargo_api
 from openedx.core.djangoapps.enrollments.api import add_enrollment
 from openedx.core.djangoapps.enrollments.views import EnrollmentCrossDomainSessionAuth
 from openedx.core.djangoapps.user_api.preferences.api import update_email_opt_in
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from openedx.core.djangoapps.enrollments.utils import is_enrollment_allowed
 from openedx.core.lib.api.authentication import BearerAuthenticationAllowInactiveUser
 
 from ...constants import Messages
@@ -111,6 +113,15 @@ class BasketsView(APIView):
         if CourseEnrollment.is_enrollment_closed(user, course):
             msg = Messages.ENROLLMENT_CLOSED.format(course_id=course_id)
             log.info('Unable to enroll user %s in closed course %s.', user.id, course_id)
+            return DetailResponse(msg, status=HTTP_406_NOT_ACCEPTABLE)
+
+        # Check whether user can enroll the course
+        course_overview = CourseOverview.objects.get(id=course_key)
+
+        is_allowed = is_enrollment_allowed(user, course_id, course_overview)
+        if not is_allowed:
+            msg = Messages.ENROLLMENT_BLOCKED.format(username=user.username, course_id=course_id)
+            log.info('User %s is not allowed to enroll in course %s.', user.username, course_id)
             return DetailResponse(msg, status=HTTP_406_NOT_ACCEPTABLE)
 
         # If there is no audit or honor course mode, this most likely
