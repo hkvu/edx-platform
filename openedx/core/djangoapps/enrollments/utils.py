@@ -16,10 +16,11 @@ def serialize_user_info(user, user_social_auths=None):
     user_info = {
         'username': user.username,
         'email': user.email,
+        'sso_list': [],
     }
     if user_social_auths:
         for user_social_auth in user_social_auths:
-            user_info.setdefault('sso_list', []).append({
+            user_info['sso_list'].append({
                 "provider": user_social_auth.provider,
                 'uid': user_social_auth.uid,
             })
