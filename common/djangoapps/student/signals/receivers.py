@@ -17,10 +17,12 @@ from common.djangoapps.student.helpers import EMAIL_EXISTS_MSG_FMT, USERNAME_EXI
 from common.djangoapps.student.models import (
     CourseEnrollment,
     CourseEnrollmentCelebration,
+    CourseEnrollmentUserProfile,
     PendingNameChange,
     is_email_retired,
     is_username_retired
 )
+from social_django.models import UserSocialAuth
 from common.djangoapps.student.models_api import confirm_name_change
 from common.djangoapps.student.signals import USER_EMAIL_CHANGED
 from openedx.features.name_affirmation_api.utils import is_name_affirmation_installed
@@ -58,6 +60,50 @@ def on_user_updated(sender, instance, **kwargs):
                 field="email"
             )
 
+@receiver(post_save, sender=CourseEnrollment)
+def create_course_enrollment_user_profile(sender, instance, created, **kwargs):
+    """
+    Creates enrolled user profile when enrollments are created
+    """
+
+    def serialize_user_profile(user, user_social_auths=None):
+        """
+        Helper method to serialize resulting in user_info_object
+        based on passed in django models
+        """
+        user_info = {
+            'username': user.username,
+            'email': user.email,
+            'tpa_history': [],
+        }
+        if user_social_auths:
+            for user_social_auth in user_social_auths:
+                user_info['tpa_history'].append({
+                    "provider": user_social_auth.provider,
+                    'uid': user_social_auth.uid,
+                    'extra_data': user_social_auth.extra_data,
+                    'created': user_social_auth.created,
+                })
+        return user_info
+
+    if not created:
+        return
+
+    user = instance.user
+    
+    try:
+        user_social_auths = UserSocialAuth.objects.filter(user=user)
+        user_info = serialize_user_profile(user, user_social_auths)
+
+        CourseEnrollmentUserProfile.create_enrollment_user_profile(
+            enrollment=instance,
+            email=user_info['email'],
+            tpa_history=user_info['tpa_history']
+        )
+
+    except Exception as exc:   # pylint: disable=broad-except
+        logger.exception(f'Unable to create new enrollment user profile for user [{user.email}]')
+        pass
 
 @receiver(post_save, sender=CourseEnrollment)
 def create_course_enrollment_celebration(sender, instance, created, **kwargs):

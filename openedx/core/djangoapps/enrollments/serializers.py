@@ -8,7 +8,7 @@ import logging
 from rest_framework import serializers
 
 from common.djangoapps.course_modes.models import CourseMode
-from common.djangoapps.student.models import CourseEnrollment
+from common.djangoapps.student.models import CourseEnrollment, CourseEnrollmentUserProfile
 
 log = logging.getLogger(__name__)
 
@@ -108,6 +108,16 @@ class CourseEnrollmentsApiListSerializer(CourseEnrollmentSerializer):
 
     class Meta(CourseEnrollmentSerializer.Meta):
         fields = CourseEnrollmentSerializer.Meta.fields + ('course_id', )
+
+
+class CourseEnrollmentUserProfileSerializer(serializers.ModelSerializer):
+    """
+       Serializes CourseEnrollmentUserProfile models
+    """
+
+    class Meta:
+        model = CourseEnrollmentUserProfile
+        fields = ('enrollment', 'enrolled_email', 'enrolled_tpa_history', 'time_stamp')
 
 
 class ModeSerializer(serializers.Serializer):  # pylint: disable=abstract-method

@@ -22,6 +22,8 @@ _COURSES = []
 
 _ENROLLMENT_ATTRIBUTES = []
 
+_ENROLLMENT_USER_PROFILE = {}
+
 _VERIFIED_MODE_EXPIRED = []
 
 
@@ -114,6 +116,12 @@ def add_or_update_enrollment_attr(user_id, course_id, attributes):
 def get_enrollment_attributes(user_id, course_id):
     """Retrieve enrollment attribute array"""
     return _ENROLLMENT_ATTRIBUTES
+
+
+# pylint: disable=unused-argument
+def get_enrollment_user_profile(username, course_id):
+    """Retrieve enrollment user profile array"""
+    return _ENROLLMENT_USER_PROFILE
 
 
 def set_expired_mode(course_id):

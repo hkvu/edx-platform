@@ -13,7 +13,8 @@ from .views import (
     EnrollmentListView,
     EnrollmentUserRolesView,
     EnrollmentView,
-    UnenrollmentView
+    UnenrollmentView,
+    EnrollmentUserProfileView,
 )
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
             EnrollmentView.as_view(), name='courseenrollment'),
     path('enrollment', EnrollmentListView.as_view(), name='courseenrollments'),
     re_path(r'^enrollments/?$', CourseEnrollmentsApiListView.as_view(), name='courseenrollmentsapilist'),
+    re_path(r'^user_profile/', EnrollmentUserProfileView.as_view(), name='courseenrollmentsuserprofile'),
     re_path(fr'^course/{settings.COURSE_ID_PATTERN}$',
             EnrollmentCourseDetailView.as_view(), name='courseenrollmentdetails'),
     path('unenroll/', UnenrollmentView.as_view(), name='unenrollment'),
