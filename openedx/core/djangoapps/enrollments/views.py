@@ -27,7 +27,7 @@ from rest_framework.views import APIView  # lint-amnesty, pylint: disable=wrong-
 
 from common.djangoapps.course_modes.models import CourseMode
 from common.djangoapps.student.auth import user_has_role
-from common.djangoapps.student.models import CourseEnrollment, CourseEnrollmentAllowed, User
+from common.djangoapps.student.models import CourseEnrollment, CourseEnrollmentAllowed, CourseEnrollmentUserProfile, User
 from common.djangoapps.student.roles import CourseStaffRole, GlobalStaff
 from common.djangoapps.util.disable_rate_limit import can_disable_rate_limit
 from openedx.core.djangoapps.cors_csrf.authentication import SessionAuthenticationCrossDomainCsrf
@@ -46,6 +46,7 @@ from openedx.core.djangoapps.enrollments.forms import CourseEnrollmentsApiListFo
 from openedx.core.djangoapps.enrollments.paginators import CourseEnrollmentsApiListPagination
 from openedx.core.djangoapps.enrollments.serializers import (
     CourseEnrollmentAllowedSerializer,
+    CourseEnrollmentUserProfileSerializer,
     CourseEnrollmentsApiListSerializer
 )
 from openedx.core.djangoapps.user_api.accounts.permissions import CanRetireUser
@@ -291,6 +292,73 @@ class EnrollmentUserRolesView(APIView):
             'is_staff': request.user.is_staff,
         })
 
+
+class EnrollmentUserProfileView(APIView, ApiKeyPermissionMixIn):
+    """
+    **Use Case**
+
+        Get the enrollment user profile filtered by the parameters.
+
+    **Example Requests**
+
+        GET /api/enrollment/v1/user_profile?course_id={course_id}&username={username}
+
+        course_id: A course id. The returned user profile will be filtered to
+        only include user profile for the given course.
+
+        username: User name. The returned user profile will be filtered to
+        only include user profile for the given user.
+
+    **Response Values**
+
+        If the request is successful, an HTTP 200 "OK" response is
+        returned along with an enrollment user profile filtered by the parameters,
+    """
+
+    authentication_classes = (
+        JwtAuthentication,
+        BearerAuthenticationAllowInactiveUser,
+        EnrollmentCrossDomainSessionAuth,
+    )
+    permission_classes = (ApiKeyHeaderPermissionIsAuthenticated,)
+    throttle_classes = (EnrollmentUserThrottle,)
+
+    @method_decorator(ensure_csrf_cookie_cross_domain)
+    def get(self, request):
+        """
+        Gets enrollment user profile filtered by the parameters
+        """
+        try:
+            course_id = request.GET.get('course_id') 
+            username = request.GET.get('username') or request.user.username
+
+            if request.user.username != username and not self.has_api_key_permissions(request) \
+                    and not request.user.is_staff:
+                # Return a 403 (Unauthorized). If one user is looking up other users.
+                return Response(status=status.HTTP_403_FORBIDDEN,
+                    data={
+                        'message': f'User {request.user.username} is not authorized to view the record.'
+                    }
+                )
+
+            if (username and course_id is not None):
+                user_profile = api.get_enrollment_user_profile(username, course_id)
+            else:
+                return Response(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    data={ "message": ("Course ID not specified.") }
+                )
+        except Exception: # pylint: disable=broad-except
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    "message": (
+                        "An error occurred while retrieving enrollment user profile for user '{username} and course '{course_id}'"
+                    ).format(username=username, course_id=course_id)
+                }
+            )
+        return Response(user_profile)
+            
 
 @can_disable_rate_limit
 class EnrollmentCourseDetailView(APIView):

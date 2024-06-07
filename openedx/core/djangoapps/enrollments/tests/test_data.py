@@ -19,7 +19,7 @@ from openedx.core.djangoapps.enrollments.errors import (
     CourseEnrollmentFullError,
     UserNotFoundError
 )
-from openedx.core.djangoapps.enrollments.serializers import CourseEnrollmentSerializer
+from openedx.core.djangoapps.enrollments.serializers import CourseEnrollmentSerializer, CourseEnrollmentUserProfileSerializer
 from openedx.core.djangolib.testing.utils import skip_unless_lms
 from openedx.core.lib.exceptions import CourseNotFoundError
 from common.djangoapps.student.models import AlreadyEnrolledError, CourseEnrollment, CourseFullError, EnrollmentClosedError  # lint-amnesty, pylint: disable=line-too-long
@@ -263,6 +263,45 @@ class EnrollmentDataTest(ModuleStoreTestCase):
         )
         assert result.exists()
         assert CourseEnrollmentSerializer(results, many=True).data == created_enrollments
+
+    @ddt.data(
+        # Default (no course modes in the database)
+        # Expect that users are automatically enrolled as "honor".
+        ([], 'honor'),
+
+        # Audit / Verified / Honor
+        # We should always go to the "choose your course" page.
+        # We should also be enrolled as "honor" by default.
+        (['honor', 'verified', 'audit'], 'verified'),
+    )
+    @ddt.unpack
+    def test_get_enrollment_user_profile(self, course_modes, enrollment_mode):
+        self._create_course_modes(course_modes)
+
+        # Create user to enroll in the course
+
+        user = UserFactory.create(
+            username=self.USERNAME,
+            email=self.EMAIL,
+            password=self.PASSWORD
+        )
+
+        # Create the original enrollments.
+        enrollment = data.create_course_enrollment(
+            user.username,
+            str(self.course.id),
+            enrollment_mode,
+            True
+        )
+
+        # Compare the created enrollment user profile with the results
+        # from the get user enrollment user profile request.
+        result = data.get_enrollment_user_profile(
+            self.USERNAME,
+            str(self.course.id)
+        )
+
+        assert result['enrolled_email'] == self.EMAIL
 
     @ddt.data(
         # Default (no course modes in the database)

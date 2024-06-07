@@ -1780,6 +1780,98 @@ class UserRoleTest(ModuleStoreTestCase):
 
 @ddt.ddt
 @skip_unless_lms
+class CourseEnrollmentUserProfileTest(ModuleStoreTestCase):
+    """
+    Tests the API call to get enrollment user profile..
+    """
+    ENABLED_CACHES = ['default']
+    CREATED_DATA = datetime.datetime(2018, 1, 1, 0, 0, 1, tzinfo=pytz.UTC)
+
+    def setUp(self):
+        """ Create a course and user, then log in. """
+        super().setUp()
+        self.course = CourseFactory.create(org='e', number='d', run='X', emit_signals=True)
+
+        self.staff_user = AdminFactory(
+            username='staff',
+            email='staff@example.com',
+            password='edx'
+        )
+        self.student1 = UserFactory(
+            username='student1',
+            email='student1@example.com',
+            password='edx'
+        )
+        self.student2 = UserFactory(
+            username='student2',
+            email='student2@example.com',
+            password='edx'
+        )
+
+        with freeze_time(self.CREATED_DATA):
+            data.create_course_enrollment(
+                self.student1.username,
+                str(self.course.id),
+                'honor',
+                True
+            )
+            data.create_course_enrollment(
+                self.student2.username,
+                str(self.course.id),
+                'honor',
+                True
+            )
+            data.create_course_enrollment(
+                self.staff_user.username,
+                str(self.course.id),
+                'honor',
+                True
+            )
+        self.url = reverse('courseenrollmentsuserprofile')
+
+    def _assert_enrollment_user_profile(self, params=None, expected_status=status.HTTP_200_OK):
+        """
+        Make a request to the CourseEnrolllmentUserProfile endpoint and run assertions on the response
+        using the optional parameters 'params', 'expected_status'.
+        """
+        response = self._make_request(params)
+        assert response.status_code == expected_status
+        content = json.loads(response.content.decode('utf-8'))
+        print(content)
+        return content
+
+    def _make_request(self, params=None):
+        self.client.login(username=params['user'], password='edx')
+        return self.client.get(self.url, params['query'])
+
+    def test_user_not_authenticated(self):
+        self.client.logout()
+        response = self.client.get(self.url, {'course_id': str(self.course.id)})
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_user_not_found(self):
+        self.client.login(username=self.staff_user.username, password='edx')
+        response = self.client.get(self.url, {'username': 'nobody', 'course_id': str(self.course.id)})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_user_not_authorized(self):
+        self.client.login(username=self.student1.username, password='edx')
+        response = self.client.get(self.url, {'username': self.student2.username, 'course_id': str(self.course.id)})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @ddt.data(
+        # user, query
+        ({'user': 'student1', 'query': {'username': 'student1', 'course_id': 'e/d/X'}}, ),
+        ({'user': 'student1', 'query': {'course_id': 'e/d/X'}}, ),
+        ({'user': 'staff', 'query': {'username': 'student2', 'course_id': 'e/d/X'}}, ),
+    )
+    @ddt.unpack
+    def test_get_user_profile(self, params):
+        content = self._assert_enrollment_user_profile(params, status.HTTP_200_OK)
+
+
+@ddt.ddt
+@skip_unless_lms
 class CourseEnrollmentsApiListTest(APITestCase, ModuleStoreTestCase):
     """
     Test the course enrollments list API.

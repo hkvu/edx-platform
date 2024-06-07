@@ -224,6 +224,14 @@ class EnrollmentTest(CacheIsolationTestCase):
         attributes = api.get_enrollment_attributes(self.USERNAME, self.COURSE_ID)
         assert enrollment_attributes[0] == attributes[0]
 
+    def test_get_enrollment_user_profile(self):
+        # Add fake course enrollment information to the fake data API
+        fake_data_api.add_course(self.COURSE_ID, course_modes=['honor', 'verified', 'audit', 'credit'])
+        # Enroll in the course and verify the URL we get sent to
+        enrollment = api.add_enrollment(self.USERNAME, self.COURSE_ID, mode='audit')
+        result = api.get_enrollment_user_profile(self.USERNAME, self.COURSE_ID)
+        assert result == {}
+
     def test_get_course_details(self):
         # Add a fake course enrollment information to the fake data API
         fake_data_api.add_course(self.COURSE_ID, course_modes=['honor', 'verified', 'audit'])

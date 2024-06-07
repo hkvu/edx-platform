@@ -18,12 +18,13 @@ from openedx.core.djangoapps.enrollments.errors import (
     InvalidEnrollmentAttribute,
     UserNotFoundError
 )
-from openedx.core.djangoapps.enrollments.serializers import CourseEnrollmentSerializer, CourseSerializer
+from openedx.core.djangoapps.enrollments.serializers import CourseEnrollmentSerializer, CourseEnrollmentUserProfileSerializer, CourseSerializer
 from openedx.core.lib.exceptions import CourseNotFoundError
 from common.djangoapps.student.models import (
     AlreadyEnrolledError,
     CourseEnrollment,
     CourseEnrollmentAttribute,
+    CourseEnrollmentUserProfile,
     CourseFullError,
     EnrollmentClosedError,
     NonExistentCourseError
@@ -246,6 +247,28 @@ def get_enrollment_attributes(username, course_id):
     user = _get_user(username)
     enrollment = CourseEnrollment.get_enrollment(user, course_key)
     return CourseEnrollmentAttribute.get_enrollment_attributes(enrollment)
+
+def get_enrollment_user_profile(username, course_id):
+    """Retrieve enrollment user profile for given user for provided course.
+
+    Args:
+        username: The User to get enrollment user profile for
+        course_id (str): The Course to get enrollment user profile for.
+
+    Returns:
+        A serializable dictionary representing the enrollment user profile.
+
+    """
+    course_key = CourseKey.from_string(course_id)
+    user = _get_user(username)
+
+    try:
+        user_profile = CourseEnrollmentUserProfile.get_enrollment_user_profile(user, course_key)
+    except Exception:
+        msg = f"Requested enrollment user profile for unknown course {course_key} and {user.username}"
+        log.warning(msg)
+    else:
+        return CourseEnrollmentUserProfileSerializer(user_profile).data if user_profile else {}
 
 
 def unenroll_user_from_all_courses(username):

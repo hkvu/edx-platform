@@ -458,6 +458,19 @@ def get_enrollment_attributes(username, course_id):
     return _data_api().get_enrollment_attributes(username, course_id)
 
 
+def get_enrollment_user_profile(username, course_id):
+    """Retrieve enrollment user profile for given user for provided course.
+
+    Args:
+        username: The User to get enrollment user profile for
+        course_id: The Course to get enrollment user profile for.
+
+    Returns:
+        A serializable dictionary of course enrollment user profile.
+    """
+    return _data_api().get_enrollment_user_profile(username, course_id)
+
+
 def _default_course_mode(course_id):
     """Return the default enrollment for a course.
 

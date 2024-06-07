@@ -1778,3 +1778,42 @@ class CourseEnrollmentCelebration(TimeStampedModel):
             return week_activity_count == goal.days_per_week
         except CourseGoal.DoesNotExist:
             return False
+
+class CourseEnrollmentUserProfile(models.Model):
+    """
+    This table contains user's profile such as email, tpa history
+    when user enrolls in a course.
+
+    .. no_sensitive_pii:
+    """
+    enrollment = models.OneToOneField(CourseEnrollment, models.CASCADE, related_name='user_profile')
+    enrolled_email = models.CharField(max_length=255, db_index=True)
+    enrolled_tpa_history = models.TextField(null=True)
+    time_stamp = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return (
+            '[CourseEnrollmentUserProfile] course: {}; user: {}'
+        ).format(self.enrollment.course.id, self.enrollment.user.username)
+
+    @classmethod
+    def create_enrollment_user_profile(cls, enrollment, email, tpa_history=[]):
+        """
+        saves the student user profile
+        """
+        return cls.objects.create(
+            enrollment=enrollment,
+            enrolled_email=email,
+            enrolled_tpa_history=tpa_history,
+        )
+
+    @classmethod
+    def get_enrollment_user_profile(cls, user, course_key):
+        """
+        if matches returns the most recent entry in the table filtered by course_id and username else returns None.
+        """
+        try:
+            enrollment_user_profile = cls.objects.filter(enrollment__course_id=course_key, enrollment__user__username=user).latest('time_stamp')
+        except cls.DoesNotExist:
+            enrollment_user_profile = None
+        return enrollment_user_profile
