@@ -303,7 +303,7 @@ class InMemoryReportMixin:
         """
         date = datetime.now(UTC)
         task_input_key = ''
-        if hasattr(self.context, 'task_input') and self.context.task_input['page'] and self.context.task_input['total_pages']:
+        if hasattr(self.context, 'task_input') and self.context.task_input.get('page') and self.context.task_input.get('total_pages'):
             task_input_key = '_' + str(self.context.task_input['page']) + '_of_' + str(self.context.task_input['total_pages'])
         upload_csv_to_report_store(
             [success_headers] + success_rows,
@@ -396,7 +396,7 @@ class TemporaryFileReportMixin:
 
         success_file.seek(0)
         task_input_key = ''
-        if hasattr(self.context, 'task_input') and self.context.task_input['page'] and self.context.task_input['total_pages']:
+        if hasattr(self.context, 'task_input') and self.context.task_input.get('page') and self.context.task_input.get('total_pages'):
             task_input_key = '_' + str(self.context.task_input['page']) + '_of_' + str(self.context.task_input['total_pages'])
         upload_csv_file_to_report_store(
             success_file,
@@ -469,7 +469,7 @@ class GradeReportBase:
             if verified_only:
                 filter_kwargs['courseenrollment__mode'] = CourseMode.VERIFIED
 
-            if hasattr(self.context, 'task_input') and self.context.task_input['page'] and self.context.task_input['page_size']:
+            if hasattr(self.context, 'task_input') and self.context.task_input.get('page') and self.context.task_input.get('page_size'):
                 start = self.context.task_input['page'] - 1
                 page_size = self.context.task_input['page_size']
                 user_ids_list = get_user_model().objects.filter(**filter_kwargs).values_list('id', flat=True).order_by('id')[start * page_size:start * page_size + page_size]
